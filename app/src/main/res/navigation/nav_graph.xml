@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/LoginFragment">
+
+    <fragment
+        android:id="@+id/LoginFragment"
+        android:name="edu.uga.cs.roommateshopping.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_LoginFragment_to_RegisterFragment"
+            app:destination="@id/RegisterFragment" />
+        <action
+            android:id="@+id/action_LoginFragment_to_ShoppingListFragment"
+            app:destination="@id/ShoppingListFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/RegisterFragment"
+        android:name="edu.uga.cs.roommateshopping.RegisterFragment"
+        android:label="Register"
+        tools:layout="@layout/fragment_register">
+        <action
+            android:id="@+id/action_RegisterFragment_to_ShoppingListFragment"
+            app:destination="@id/ShoppingListFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/ShoppingListFragment"
+        android:name="edu.uga.cs.roommateshopping.ShoppingListFragment"
+        android:label="Shopping List"
+        tools:layout="@layout/fragment_shopping_list">
+        <action
+            android:id="@+id/action_ShoppingListFragment_to_RecentlyPurchasedFragment"
+            app:destination="@id/RecentlyPurchasedFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/RecentlyPurchasedFragment"
+        android:name="edu.uga.cs.roommateshopping.RecentlyPurchasedFragment"
+        android:label="Shopping Basket"
+        tools:layout="@layout/fragment_recently_purchased" />
+
+    <fragment
+        android:id="@+id/FirstFragment"
+        android:name="edu.uga.cs.roommateshopping.FirstFragment"
+        android:label="@string/first_fragment_label"
+        tools:layout="@layout/fragment_first">
+
+        <action
+            android:id="@+id/action_FirstFragment_to_SecondFragment"
+            app:destination="@id/SecondFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/SecondFragment"
+        android:name="edu.uga.cs.roommateshopping.SecondFragment"
+        android:label="@string/second_fragment_label"
+        tools:layout="@layout/fragment_second">
+
+        <action
+            android:id="@+id/action_SecondFragment_to_FirstFragment"
+            app:destination="@id/FirstFragment" />
+    </fragment>
+</navigation>
