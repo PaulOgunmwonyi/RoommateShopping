@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 import edu.uga.cs.roommateshopping.models.PurchaseGroup;
-import edu.uga.cs.roommateshopping.models.ShoppingItem;
 
 public class PurchasedGroupAdapter extends RecyclerView.Adapter<PurchasedGroupAdapter.PurchasedGroupHolder> {
 

@@ -31,8 +31,10 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import edu.uga.cs.roommateshopping.databinding.FragmentShoppingListBinding;
+import edu.uga.cs.roommateshopping.models.PurchaseGroup;
 import edu.uga.cs.roommateshopping.models.ShoppingItem;
 
 public class ShoppingListFragment extends Fragment implements ShoppingItemAdapter.OnItemClickListener {
@@ -43,7 +45,6 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
     private List<ShoppingItem> shoppingItemList;
     private ShoppingItemAdapter adapter;
     private FirebaseAuth mAuth;
-    private ValueEventListener valueEventListener;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -63,9 +64,16 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
 
         databaseReference = FirebaseDatabase.getInstance().getReference("shopping_list");
 
-        ensureUserInRoommatesList();
+        binding.buttonConfirmSelection.setOnClickListener(v -> {
+            Set<Integer> selected = adapter.getSelectedPositions();
+            if (!selected.isEmpty()) {
+                showMultiPurchaseDialog(selected);
+            } else {
+                Toast.makeText(getContext(), "No items selected", Toast.LENGTH_SHORT).show();
+            }
+        });
 
-        valueEventListener = new ValueEventListener() {
+        databaseReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 shoppingItemList.clear();
@@ -83,8 +91,7 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.w(TAG, "loadPost:onCancelled", error.toException());
             }
-        };
-        databaseReference.addValueEventListener(valueEventListener);
+        });
 
         FloatingActionButton fab = requireActivity().findViewById(R.id.fab);
         if (fab != null) {
@@ -93,26 +100,6 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
         }
 
         setupMenu();
-    }
-
-    private void ensureUserInRoommatesList() {
-        if (mAuth.getCurrentUser() != null) {
-            String email = mAuth.getCurrentUser().getEmail();
-            DatabaseReference roommatesRef = FirebaseDatabase.getInstance().getReference("roommates");
-            roommatesRef.orderByValue().equalTo(email).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (!snapshot.exists()) {
-                        roommatesRef.push().setValue(email);
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    Log.w(TAG, "ensureUserInRoommatesList:onCancelled", error.toException());
-                }
-            });
-        }
     }
 
     private void setupMenu() {
@@ -136,18 +123,72 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
                     NavHostFragment.findNavController(ShoppingListFragment.this)
                             .navigate(R.id.action_ShoppingListFragment_to_RecentlyPurchasedFragment);
                     return true;
-                } else if (menuItem.getItemId() == R.id.action_purchased) {
+                } else if (menuItem.getItemId() == R.id.action_purchased || menuItem.getItemId() == R.id.action_roommates) {
                     NavHostFragment.findNavController(ShoppingListFragment.this)
                             .navigate(R.id.action_ShoppingListFragment_to_PurchasedGroupsFragment);
                     return true;
-                } else if (menuItem.getItemId() == R.id.action_roommates) {
-                    NavHostFragment.findNavController(ShoppingListFragment.this)
-                            .navigate(R.id.action_ShoppingListFragment_to_RoommatesFragment);
+                } else if (menuItem.getItemId() == R.id.action_select_mode) {
+                    toggleSelectionMode(menuItem);
                     return true;
                 }
                 return false;
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
+    private void toggleSelectionMode(MenuItem menuItem) {
+        if (adapter.isSelectionMode()) {
+            // Confirm purchase for selected items
+            Set<Integer> selected = adapter.getSelectedPositions();
+            if (!selected.isEmpty()) {
+                showMultiPurchaseDialog(selected);
+            } else {
+                adapter.setSelectionMode(false);
+                menuItem.setTitle("Select Items");
+                binding.buttonConfirmSelection.setVisibility(View.GONE);
+            }
+        } else {
+            adapter.setSelectionMode(true);
+            menuItem.setTitle("Cancel Selection");
+            binding.buttonConfirmSelection.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void showMultiPurchaseDialog(Set<Integer> selectedPositions) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Move to Basket")
+                .setMessage("Do you want to move " + selectedPositions.size() + " selected items to the basket?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    List<ShoppingItem> selectedItems = new ArrayList<>();
+                    List<Integer> sortedPositions = new ArrayList<>(selectedPositions);
+                    java.util.Collections.sort(sortedPositions, java.util.Collections.reverseOrder());
+
+                    for (int pos : sortedPositions) {
+                        selectedItems.add(shoppingItemList.get(pos));
+                    }
+
+                    DatabaseReference recentlyPurchasedRef = FirebaseDatabase.getInstance().getReference("recently_purchased");
+                    String userEmail = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getEmail() : "Anonymous";
+
+                    for (ShoppingItem item : selectedItems) {
+                        String oldKey = item.getKey();
+                        item.setPurchasedBy(userEmail);
+                        item.setPrice("0"); // Default price in basket, can be updated later or at checkout
+
+                        recentlyPurchasedRef.push().setValue(item).addOnSuccessListener(aVoid -> {
+                            databaseReference.child(oldKey).removeValue();
+                        });
+                    }
+
+                    Toast.makeText(getContext(), selectedItems.size() + " items moved to basket", Toast.LENGTH_SHORT).show();
+                    adapter.setSelectionMode(false);
+                    binding.buttonConfirmSelection.setVisibility(View.GONE);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    adapter.setSelectionMode(false);
+                    binding.buttonConfirmSelection.setVisibility(View.GONE);
+                })
+                .show();
     }
 
     private void showAddDialog() {
@@ -202,33 +243,23 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
 
     @Override
     public void onPurchaseClick(ShoppingItem item) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Mark as Purchased");
-        builder.setMessage("Enter the price for " + item.getName());
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Add to Basket")
+                .setMessage("Do you want to add " + item.getName() + " to the basket?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    if (mAuth.getCurrentUser() != null) {
+                        item.setPurchasedBy(mAuth.getCurrentUser().getEmail());
+                    }
+                    item.setPrice("0"); // Default price, can be set in basket
 
-        final EditText priceInput = new EditText(requireContext());
-        priceInput.setHint("Price");
-        builder.setView(priceInput);
-
-        builder.setPositiveButton("Confirm", (dialog, which) -> {
-            String price = priceInput.getText().toString();
-            if (!price.isEmpty()) {
-                item.setPrice(price);
-                if (mAuth.getCurrentUser() != null) {
-                    item.setPurchasedBy(mAuth.getCurrentUser().getEmail());
-                }
-                
-                // Move to recently_purchased
-                DatabaseReference purchasedRef = FirebaseDatabase.getInstance().getReference("recently_purchased");
-                purchasedRef.push().setValue(item).addOnSuccessListener(aVoid -> {
-                    // Remove from shopping_list
-                    databaseReference.child(item.getKey()).removeValue();
-                    Toast.makeText(getContext(), "Item purchased!", Toast.LENGTH_SHORT).show();
-                });
-            }
-        });
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+                    DatabaseReference recentlyPurchasedRef = FirebaseDatabase.getInstance().getReference("recently_purchased");
+                    recentlyPurchasedRef.push().setValue(item).addOnSuccessListener(aVoid -> {
+                        databaseReference.child(item.getKey()).removeValue();
+                        Toast.makeText(getContext(), item.getName() + " added to basket!", Toast.LENGTH_SHORT).show();
+                    });
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 
     @Override
@@ -263,14 +294,6 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (databaseReference != null && valueEventListener != null) {
-            databaseReference.removeEventListener(valueEventListener);
-        }
     }
 
     @Override

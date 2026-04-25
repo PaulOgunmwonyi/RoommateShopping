@@ -5,13 +5,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.core.view.MenuHost;
-import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Lifecycle;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.firebase.database.DataSnapshot;
@@ -58,8 +55,6 @@ public class RecentlyPurchasedFragment extends Fragment implements PurchasedItem
 
         binding.buttonCheckout.setOnClickListener(v -> checkout());
 
-        setupMenu();
-
         valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -102,60 +97,47 @@ public class RecentlyPurchasedFragment extends Fragment implements PurchasedItem
         }
     }
 
-    private void setupMenu() {
-        MenuHost menuHost = requireActivity();
-        menuHost.addMenuProvider(new MenuProvider() {
-            @Override
-            public void onCreateMenu(@NonNull android.view.Menu menu, @NonNull android.view.MenuInflater menuInflater) {
-                menuInflater.inflate(R.menu.menu_shopping, menu);
-            }
-
-            @Override
-            public boolean onMenuItemSelected(@NonNull android.view.MenuItem menuItem) {
-                if (menuItem.getItemId() == R.id.action_logout) {
-                    mAuth.signOut();
-                    android.view.View fab = requireActivity().findViewById(R.id.fab);
-                    if (fab != null) fab.setVisibility(android.view.View.GONE);
-                    NavHostFragment.findNavController(RecentlyPurchasedFragment.this)
-                            .navigate(R.id.LoginFragment);
-                    return true;
-                } else if (menuItem.getItemId() == R.id.action_purchased) {
-                    NavHostFragment.findNavController(RecentlyPurchasedFragment.this)
-                            .navigate(R.id.action_RecentlyPurchasedFragment_to_PurchasedGroupsFragment);
-                    return true;
-                } else if (menuItem.getItemId() == R.id.action_roommates) {
-                    NavHostFragment.findNavController(RecentlyPurchasedFragment.this)
-                            .navigate(R.id.action_RecentlyPurchasedFragment_to_RoommatesFragment);
-                    return true;
-                }
-                return false;
-            }
-        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
-    }
-
     private void checkout() {
         if (purchasedItemList.isEmpty()) {
-            android.widget.Toast.makeText(getContext(), "Basket is empty", android.widget.Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Basket is empty", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        double total = 0;
-        for (ShoppingItem item : purchasedItemList) {
-            try {
-                total += Double.parseDouble(item.getPrice());
-            } catch (NumberFormatException e) {
-                // ignore or handle
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Checkout");
+        builder.setMessage("Enter the total price for all items in the basket:");
+
+        final android.widget.EditText priceInput = new android.widget.EditText(requireContext());
+        priceInput.setHint("Total Price");
+        priceInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        builder.setView(priceInput);
+
+        builder.setPositiveButton("Checkout", (dialog, which) -> {
+            String priceStr = priceInput.getText().toString();
+            if (priceStr.isEmpty()) {
+                Toast.makeText(getContext(), "Please enter a price", Toast.LENGTH_SHORT).show();
+                return;
             }
-        }
 
-        String userEmail = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getEmail() : "Anonymous";
-        PurchaseGroup group = new PurchaseGroup(userEmail, new ArrayList<>(purchasedItemList), total);
+            double total;
+            try {
+                total = Double.parseDouble(priceStr);
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Invalid price", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-        DatabaseReference purchasedGroupsRef = FirebaseDatabase.getInstance().getReference("purchased_groups");
-        purchasedGroupsRef.push().setValue(group).addOnSuccessListener(aVoid -> {
-            databaseReference.removeValue(); // Clear recently_purchased
-            android.widget.Toast.makeText(getContext(), "Checked out successfully!", android.widget.Toast.LENGTH_SHORT).show();
+            String userEmail = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getEmail() : "Anonymous";
+            PurchaseGroup group = new PurchaseGroup(userEmail, new ArrayList<>(purchasedItemList), total);
+
+            DatabaseReference purchasedGroupsRef = FirebaseDatabase.getInstance().getReference("purchased_groups");
+            purchasedGroupsRef.push().setValue(group).addOnSuccessListener(aVoid -> {
+                databaseReference.removeValue(); // Clear recently_purchased
+                Toast.makeText(getContext(), "Checked out successfully!", Toast.LENGTH_SHORT).show();
+            });
         });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 
     @Override
@@ -164,13 +146,19 @@ public class RecentlyPurchasedFragment extends Fragment implements PurchasedItem
                 .setTitle("Remove from Basket")
                 .setMessage("Do you want to remove " + item.getName() + " from the basket and put it back on the shopping list?")
                 .setPositiveButton("Yes", (dialog, which) -> {
+                    String oldKey = item.getKey();
+                    if (oldKey == null) return;
+
                     DatabaseReference shoppingListRef = FirebaseDatabase.getInstance().getReference("shopping_list");
-                    // Clear price and purchaser before putting back
-                    item.setPrice(null);
-                    item.setPurchasedBy(null);
-                    shoppingListRef.push().setValue(item).addOnSuccessListener(aVoid -> {
-                        databaseReference.child(item.getKey()).removeValue();
-                        android.widget.Toast.makeText(getContext(), "Item moved back to shopping list", android.widget.Toast.LENGTH_SHORT).show();
+
+                    // Create a clean item to move back to the shopping list
+                    ShoppingItem restoredItem = new ShoppingItem(item.getName(), item.getQuantity());
+                    restoredItem.setImageUrl(item.getImageUrl());
+                    // price and purchasedBy are null by default in constructor
+
+                    shoppingListRef.push().setValue(restoredItem).addOnSuccessListener(aVoid -> {
+                        databaseReference.child(oldKey).removeValue();
+                        Toast.makeText(getContext(), "Item moved back to shopping list", Toast.LENGTH_SHORT).show();
                     });
                 })
                 .setNegativeButton("No", null)
