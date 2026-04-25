@@ -123,6 +123,10 @@ public class RecentlyPurchasedFragment extends Fragment implements PurchasedItem
                     NavHostFragment.findNavController(RecentlyPurchasedFragment.this)
                             .navigate(R.id.action_RecentlyPurchasedFragment_to_PurchasedGroupsFragment);
                     return true;
+                } else if (menuItem.getItemId() == R.id.action_roommates) {
+                    NavHostFragment.findNavController(RecentlyPurchasedFragment.this)
+                            .navigate(R.id.action_RecentlyPurchasedFragment_to_RoommatesFragment);
+                    return true;
                 }
                 return false;
             }

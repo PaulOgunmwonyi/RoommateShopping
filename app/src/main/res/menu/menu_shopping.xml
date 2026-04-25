@@ -11,6 +11,10 @@
         android:title="Purchased"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/action_roommates"
+        android:title="Roommates"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_logout"
         android:title="Logout"
         app:showAsAction="always" />

@@ -63,6 +63,8 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
 
         databaseReference = FirebaseDatabase.getInstance().getReference("shopping_list");
 
+        ensureUserInRoommatesList();
+
         valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -93,6 +95,26 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
         setupMenu();
     }
 
+    private void ensureUserInRoommatesList() {
+        if (mAuth.getCurrentUser() != null) {
+            String email = mAuth.getCurrentUser().getEmail();
+            DatabaseReference roommatesRef = FirebaseDatabase.getInstance().getReference("roommates");
+            roommatesRef.orderByValue().equalTo(email).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (!snapshot.exists()) {
+                        roommatesRef.push().setValue(email);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.w(TAG, "ensureUserInRoommatesList:onCancelled", error.toException());
+                }
+            });
+        }
+    }
+
     private void setupMenu() {
         MenuHost menuHost = requireActivity();
         menuHost.addMenuProvider(new MenuProvider() {
@@ -117,6 +139,10 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
                 } else if (menuItem.getItemId() == R.id.action_purchased) {
                     NavHostFragment.findNavController(ShoppingListFragment.this)
                             .navigate(R.id.action_ShoppingListFragment_to_PurchasedGroupsFragment);
+                    return true;
+                } else if (menuItem.getItemId() == R.id.action_roommates) {
+                    NavHostFragment.findNavController(ShoppingListFragment.this)
+                            .navigate(R.id.action_ShoppingListFragment_to_RoommatesFragment);
                     return true;
                 }
                 return false;

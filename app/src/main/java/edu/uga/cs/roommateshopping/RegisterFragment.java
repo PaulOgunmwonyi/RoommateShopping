@@ -12,6 +12,8 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import edu.uga.cs.roommateshopping.databinding.FragmentRegisterBinding;
 
@@ -45,8 +47,13 @@ public class RegisterFragment extends Fragment {
                     .addOnCompleteListener(requireActivity(), task -> {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "createUserWithEmail:success");
-                            NavHostFragment.findNavController(RegisterFragment.this)
-                                    .navigate(R.id.action_RegisterFragment_to_ShoppingListFragment);
+                            
+                            // Save user email to roommates node
+                            DatabaseReference database = FirebaseDatabase.getInstance().getReference("roommates");
+                            database.push().setValue(email).addOnCompleteListener(dbTask -> {
+                                NavHostFragment.findNavController(RegisterFragment.this)
+                                        .navigate(R.id.action_RegisterFragment_to_ShoppingListFragment);
+                            });
                         } else {
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
                             Toast.makeText(getContext(), "Registration failed: " + task.getException().getMessage(),

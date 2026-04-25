@@ -122,6 +122,10 @@ public class PurchasedGroupsFragment extends Fragment implements PurchasedGroupA
                     NavHostFragment.findNavController(PurchasedGroupsFragment.this)
                             .navigate(R.id.action_PurchasedGroupsFragment_to_RecentlyPurchasedFragment);
                     return true;
+                } else if (menuItem.getItemId() == R.id.action_roommates) {
+                    NavHostFragment.findNavController(PurchasedGroupsFragment.this)
+                            .navigate(R.id.action_PurchasedGroupsFragment_to_RoommatesFragment);
+                    return true;
                 }
                 return false;
             }
