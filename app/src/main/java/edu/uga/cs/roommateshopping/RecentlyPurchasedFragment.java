@@ -97,6 +97,7 @@ public class RecentlyPurchasedFragment extends Fragment implements PurchasedItem
         }
     }
 
+    // Handle the checkout process for all items currently in the basket
     private void checkout() {
         if (purchasedItemList.isEmpty()) {
             Toast.makeText(getContext(), "Basket is empty", Toast.LENGTH_SHORT).show();
@@ -140,6 +141,7 @@ public class RecentlyPurchasedFragment extends Fragment implements PurchasedItem
         builder.show();
     }
 
+    // When an item in the basket is clicked, ask if it should be moved back to the shopping list
     @Override
     public void onItemClick(ShoppingItem item) {
         new androidx.appcompat.app.AlertDialog.Builder(requireContext())

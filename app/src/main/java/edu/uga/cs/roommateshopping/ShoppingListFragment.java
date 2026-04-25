@@ -136,6 +136,7 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
+    // Handle switching between normal mode and item selection mode
     private void toggleSelectionMode(MenuItem menuItem) {
         if (adapter.isSelectionMode()) {
             // Confirm purchase for selected items
@@ -154,6 +155,7 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
         }
     }
 
+    // Show a dialog to confirm moving all selected items into the basket
     private void showMultiPurchaseDialog(Set<Integer> selectedPositions) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Move to Basket")
@@ -241,6 +243,7 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
         builder.show();
     }
 
+    // Move a single item from the shopping list to the basket
     @Override
     public void onPurchaseClick(ShoppingItem item) {
         new AlertDialog.Builder(requireContext())

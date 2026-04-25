@@ -84,6 +84,7 @@ public class PurchasedGroupsFragment extends Fragment implements PurchasedGroupA
         binding.buttonSettle.setOnClickListener(v -> settleAccounts());
     }
 
+    // Calculate how much everyone spent and figure out the balances for each roommate
     private void settleAccounts() {
         if (purchaseGroupList.isEmpty()) return;
 
@@ -133,6 +134,7 @@ public class PurchasedGroupsFragment extends Fragment implements PurchasedGroupA
                 .show();
     }
 
+    // If a group is clicked, give the option to undo the purchase and move items back to the list
     @Override
     public void onItemClick(PurchaseGroup group) {
         new AlertDialog.Builder(requireContext())
