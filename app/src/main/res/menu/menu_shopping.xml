@@ -7,6 +7,10 @@
         app:showAsAction="always"
         android:icon="@android:drawable/ic_menu_agenda"/>
     <item
+        android:id="@+id/action_purchased"
+        android:title="Purchased"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_logout"
         android:title="Logout"
         app:showAsAction="always" />

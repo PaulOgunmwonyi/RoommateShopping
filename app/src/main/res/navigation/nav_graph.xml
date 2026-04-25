@@ -40,13 +40,30 @@
         <action
             android:id="@+id/action_ShoppingListFragment_to_RecentlyPurchasedFragment"
             app:destination="@id/RecentlyPurchasedFragment" />
+        <action
+            android:id="@+id/action_ShoppingListFragment_to_PurchasedGroupsFragment"
+            app:destination="@id/PurchasedGroupsFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/RecentlyPurchasedFragment"
         android:name="edu.uga.cs.roommateshopping.RecentlyPurchasedFragment"
         android:label="Shopping Basket"
-        tools:layout="@layout/fragment_recently_purchased" />
+        tools:layout="@layout/fragment_recently_purchased">
+        <action
+            android:id="@+id/action_RecentlyPurchasedFragment_to_PurchasedGroupsFragment"
+            app:destination="@id/PurchasedGroupsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/PurchasedGroupsFragment"
+        android:name="edu.uga.cs.roommateshopping.PurchasedGroupsFragment"
+        android:label="Purchased Items"
+        tools:layout="@layout/fragment_purchased_groups">
+        <action
+            android:id="@+id/action_PurchasedGroupsFragment_to_RecentlyPurchasedFragment"
+            app:destination="@id/RecentlyPurchasedFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/FirstFragment"

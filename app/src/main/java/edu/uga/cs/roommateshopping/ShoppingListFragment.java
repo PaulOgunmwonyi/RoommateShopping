@@ -43,6 +43,7 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
     private List<ShoppingItem> shoppingItemList;
     private ShoppingItemAdapter adapter;
     private FirebaseAuth mAuth;
+    private ValueEventListener valueEventListener;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -62,7 +63,7 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
 
         databaseReference = FirebaseDatabase.getInstance().getReference("shopping_list");
 
-        databaseReference.addValueEventListener(new ValueEventListener() {
+        valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 shoppingItemList.clear();
@@ -80,7 +81,8 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.w(TAG, "loadPost:onCancelled", error.toException());
             }
-        });
+        };
+        databaseReference.addValueEventListener(valueEventListener);
 
         FloatingActionButton fab = requireActivity().findViewById(R.id.fab);
         if (fab != null) {
@@ -111,6 +113,10 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
                 } else if (menuItem.getItemId() == R.id.action_basket) {
                     NavHostFragment.findNavController(ShoppingListFragment.this)
                             .navigate(R.id.action_ShoppingListFragment_to_RecentlyPurchasedFragment);
+                    return true;
+                } else if (menuItem.getItemId() == R.id.action_purchased) {
+                    NavHostFragment.findNavController(ShoppingListFragment.this)
+                            .navigate(R.id.action_ShoppingListFragment_to_PurchasedGroupsFragment);
                     return true;
                 }
                 return false;
@@ -231,6 +237,14 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (databaseReference != null && valueEventListener != null) {
+            databaseReference.removeEventListener(valueEventListener);
+        }
     }
 
     @Override

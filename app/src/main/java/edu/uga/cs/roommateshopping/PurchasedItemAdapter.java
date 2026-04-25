@@ -16,10 +16,16 @@ import edu.uga.cs.roommateshopping.models.ShoppingItem;
 
 public class PurchasedItemAdapter extends RecyclerView.Adapter<PurchasedItemAdapter.PurchasedItemHolder> {
 
-    private List<ShoppingItem> purchasedItemList;
+    public interface OnItemClickListener {
+        void onItemClick(ShoppingItem item);
+    }
 
-    public PurchasedItemAdapter(List<ShoppingItem> purchasedItemList) {
+    private List<ShoppingItem> purchasedItemList;
+    private OnItemClickListener listener;
+
+    public PurchasedItemAdapter(List<ShoppingItem> purchasedItemList, OnItemClickListener listener) {
         this.purchasedItemList = purchasedItemList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -46,6 +52,12 @@ public class PurchasedItemAdapter extends RecyclerView.Adapter<PurchasedItemAdap
         } else {
             holder.imageViewItem.setVisibility(View.GONE);
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(item);
+            }
+        });
     }
 
     @Override
