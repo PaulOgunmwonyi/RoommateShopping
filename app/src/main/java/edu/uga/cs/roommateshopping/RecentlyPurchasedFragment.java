@@ -1,3 +1,7 @@
+/**
+ * Fragment that displays the "Shopping Basket" or recently purchased items.
+ * Allows users to checkout items in the basket or move them back to the shopping list.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.os.Bundle;
@@ -5,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -16,19 +21,27 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import com.google.firebase.auth.FirebaseAuth;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import edu.uga.cs.roommateshopping.databinding.FragmentRecentlyPurchasedBinding;
+import edu.uga.cs.roommateshopping.models.PurchaseGroup;
 import edu.uga.cs.roommateshopping.models.ShoppingItem;
 
-public class RecentlyPurchasedFragment extends Fragment {
+public class RecentlyPurchasedFragment extends Fragment implements PurchasedItemAdapter.OnItemClickListener {
 
     private static final String TAG = "RecentlyPurchased";
     private FragmentRecentlyPurchasedBinding binding;
     private DatabaseReference databaseReference;
     private List<ShoppingItem> purchasedItemList;
     private PurchasedItemAdapter adapter;
+    private FirebaseAuth mAuth;
+    private ValueEventListener valueEventListener;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -40,14 +53,17 @@ public class RecentlyPurchasedFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        mAuth = FirebaseAuth.getInstance();
         purchasedItemList = new ArrayList<>();
-        adapter = new PurchasedItemAdapter(purchasedItemList);
+        adapter = new PurchasedItemAdapter(purchasedItemList, this);
         binding.recyclerViewRecentlyPurchased.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerViewRecentlyPurchased.setAdapter(adapter);
 
         databaseReference = FirebaseDatabase.getInstance().getReference("recently_purchased");
 
-        databaseReference.addValueEventListener(new ValueEventListener() {
+        binding.buttonCheckout.setOnClickListener(v -> checkout());
+
+        valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (binding == null) {
@@ -66,8 +82,10 @@ public class RecentlyPurchasedFragment extends Fragment {
                 
                 if (purchasedItemList.isEmpty()) {
                     binding.textViewEmpty.setVisibility(View.VISIBLE);
+                    binding.buttonCheckout.setEnabled(false);
                 } else {
                     binding.textViewEmpty.setVisibility(View.GONE);
+                    binding.buttonCheckout.setEnabled(true);
                 }
             }
 
@@ -75,7 +93,89 @@ public class RecentlyPurchasedFragment extends Fragment {
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.w(TAG, "loadPost:onCancelled", error.toException());
             }
+        };
+        databaseReference.addValueEventListener(valueEventListener);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (databaseReference != null && valueEventListener != null) {
+            databaseReference.removeEventListener(valueEventListener);
+        }
+    }
+
+    // Handle the checkout process for all items currently in the basket
+    private void checkout() {
+        if (purchasedItemList.isEmpty()) {
+            Toast.makeText(getContext(), "Basket is empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Checkout");
+        builder.setMessage("Enter the total price for all items in the basket:");
+
+        final android.widget.EditText priceInput = new android.widget.EditText(requireContext());
+        priceInput.setHint("Total Price");
+        priceInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        builder.setView(priceInput);
+
+        builder.setPositiveButton("Checkout", (dialog, which) -> {
+            String priceStr = priceInput.getText().toString();
+            if (priceStr.isEmpty()) {
+                Toast.makeText(getContext(), "Please enter a price", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double total;
+            try {
+                total = Double.parseDouble(priceStr);
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Invalid price", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String userEmail = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getEmail() : "Anonymous";
+            PurchaseGroup group = new PurchaseGroup(userEmail, new ArrayList<>(purchasedItemList), total);
+            
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            group.setPurchaseDate(sdf.format(new Date()));
+
+            DatabaseReference purchasedGroupsRef = FirebaseDatabase.getInstance().getReference("purchased_groups");
+            purchasedGroupsRef.push().setValue(group).addOnSuccessListener(aVoid -> {
+                databaseReference.removeValue(); // Clear recently_purchased
+                Toast.makeText(getContext(), "Checked out successfully!", Toast.LENGTH_SHORT).show();
+            });
         });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    // When an item in the basket is clicked, ask if it should be moved back to the shopping list
+    @Override
+    public void onItemClick(ShoppingItem item) {
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Remove from Basket")
+                .setMessage("Do you want to remove " + item.getName() + " from the basket and put it back on the shopping list?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    String oldKey = item.getKey();
+                    if (oldKey == null) return;
+
+                    DatabaseReference shoppingListRef = FirebaseDatabase.getInstance().getReference("shopping_list");
+
+                    // Create a clean item to move back to the shopping list
+                    ShoppingItem restoredItem = new ShoppingItem(item.getName(), item.getQuantity());
+                    restoredItem.setImageUrl(item.getImageUrl());
+                    // price and purchasedBy are null by default in constructor
+
+                    shoppingListRef.push().setValue(restoredItem).addOnSuccessListener(aVoid -> {
+                        databaseReference.child(oldKey).removeValue();
+                        Toast.makeText(getContext(), "Item moved back to shopping list", Toast.LENGTH_SHORT).show();
+                    });
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 
     @Override

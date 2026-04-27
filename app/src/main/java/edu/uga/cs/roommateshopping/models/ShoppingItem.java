@@ -1,3 +1,7 @@
+/**
+ * Model class representing a single shopping item.
+ * Stores item details such as name, quantity, price, and image URL.
+ */
 package edu.uga.cs.roommateshopping.models;
 
 import java.io.Serializable;
@@ -9,6 +13,7 @@ public class ShoppingItem implements Serializable {
     private String price;
     private String purchasedBy;
     private String imageUrl;
+    private String purchaseDate;
 
     public ShoppingItem() {
         this.key = null;
@@ -17,6 +22,7 @@ public class ShoppingItem implements Serializable {
         this.price = null;
         this.purchasedBy = null;
         this.imageUrl = null;
+        this.purchaseDate = null;
     }
 
     public ShoppingItem(String name, String quantity) {
@@ -26,6 +32,15 @@ public class ShoppingItem implements Serializable {
         this.price = null;
         this.purchasedBy = null;
         this.imageUrl = null;
+        this.purchaseDate = null;
+    }
+
+    public String getPurchaseDate() {
+        return purchaseDate;
+    }
+
+    public void setPurchaseDate(String purchaseDate) {
+        this.purchaseDate = purchaseDate;
     }
 
     public String getImageUrl() {

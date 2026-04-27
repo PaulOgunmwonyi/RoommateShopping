@@ -1,3 +1,7 @@
+/**
+ * RecyclerView adapter for displaying items in the shopping basket.
+ * Shows detailed item information including purchaser and date added.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.view.LayoutInflater;
@@ -16,10 +20,16 @@ import edu.uga.cs.roommateshopping.models.ShoppingItem;
 
 public class PurchasedItemAdapter extends RecyclerView.Adapter<PurchasedItemAdapter.PurchasedItemHolder> {
 
-    private List<ShoppingItem> purchasedItemList;
+    public interface OnItemClickListener {
+        void onItemClick(ShoppingItem item);
+    }
 
-    public PurchasedItemAdapter(List<ShoppingItem> purchasedItemList) {
+    private List<ShoppingItem> purchasedItemList;
+    private OnItemClickListener listener;
+
+    public PurchasedItemAdapter(List<ShoppingItem> purchasedItemList, OnItemClickListener listener) {
         this.purchasedItemList = purchasedItemList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -34,8 +44,9 @@ public class PurchasedItemAdapter extends RecyclerView.Adapter<PurchasedItemAdap
         ShoppingItem item = purchasedItemList.get(position);
         holder.textViewName.setText(item.getName());
         holder.textViewQuantity.setText("Quantity: " + item.getQuantity());
-        holder.textViewPrice.setText("Price: $" + item.getPrice());
-        holder.textViewPurchasedBy.setText("Purchased by: " + item.getPurchasedBy());
+        // holder.textViewPrice.setText("Price: $" + item.getPrice()); // Price removed per request
+        holder.textViewPurchasedBy.setText("In basket: " + item.getPurchasedBy());
+        holder.textViewDate.setText("Added to basket: " + (item.getPurchaseDate() != null ? item.getPurchaseDate() : "N/A"));
 
         if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
             holder.imageViewItem.setVisibility(View.VISIBLE);
@@ -46,6 +57,12 @@ public class PurchasedItemAdapter extends RecyclerView.Adapter<PurchasedItemAdap
         } else {
             holder.imageViewItem.setVisibility(View.GONE);
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(item);
+            }
+        });
     }
 
     @Override
@@ -58,6 +75,7 @@ public class PurchasedItemAdapter extends RecyclerView.Adapter<PurchasedItemAdap
         TextView textViewQuantity;
         TextView textViewPrice;
         TextView textViewPurchasedBy;
+        TextView textViewDate;
         ImageView imageViewItem;
 
         public PurchasedItemHolder(@NonNull View itemView) {
@@ -66,6 +84,7 @@ public class PurchasedItemAdapter extends RecyclerView.Adapter<PurchasedItemAdap
             textViewQuantity = itemView.findViewById(R.id.textViewQuantity);
             textViewPrice = itemView.findViewById(R.id.textViewPrice);
             textViewPurchasedBy = itemView.findViewById(R.id.textViewPurchasedBy);
+            textViewDate = itemView.findViewById(R.id.textViewDate);
             imageViewItem = itemView.findViewById(R.id.imageViewItem);
         }
     }

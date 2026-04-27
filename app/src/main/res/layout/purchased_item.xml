@@ -50,7 +50,15 @@
             android:layout_height="wrap_content"
             android:text="Price: $0.00"
             android:textSize="14sp"
-            android:textColor="@android:color/holo_green_dark"/>
+            android:textColor="@android:color/holo_green_dark"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/textViewDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Purchased on: "
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/textViewPurchasedBy"

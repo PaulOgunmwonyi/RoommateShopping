@@ -40,6 +40,12 @@
         <action
             android:id="@+id/action_ShoppingListFragment_to_RecentlyPurchasedFragment"
             app:destination="@id/RecentlyPurchasedFragment" />
+        <action
+            android:id="@+id/action_ShoppingListFragment_to_PurchasedGroupsFragment"
+            app:destination="@id/PurchasedGroupsFragment" />
+        <action
+            android:id="@+id/action_ShoppingListFragment_to_RoommatesFragment"
+            app:destination="@id/RoommatesFragment" />
     </fragment>
 
     <fragment
@@ -49,23 +55,14 @@
         tools:layout="@layout/fragment_recently_purchased" />
 
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="edu.uga.cs.roommateshopping.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
+        android:id="@+id/PurchasedGroupsFragment"
+        android:name="edu.uga.cs.roommateshopping.PurchasedGroupsFragment"
+        android:label="Purchased Groups"
+        tools:layout="@layout/fragment_purchased_groups" />
 
-        <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
-    </fragment>
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="edu.uga.cs.roommateshopping.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
-
-        <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
-    </fragment>
+        android:id="@+id/RoommatesFragment"
+        android:name="edu.uga.cs.roommateshopping.RoommatesFragment"
+        android:label="Roommates"
+        tools:layout="@layout/fragment_roommates" />
 </navigation>

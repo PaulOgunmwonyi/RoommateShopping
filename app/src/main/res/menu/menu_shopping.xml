@@ -3,11 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_basket"
-        android:title="Basket"
-        app:showAsAction="always"
-        android:icon="@android:drawable/ic_menu_agenda"/>
+        android:title="@string/basket"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_select_mode"
+        android:title="Select Items"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_purchased"
+        android:title="Purchased List"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_roommates"
+        android:title="Roommates"
+        app:showAsAction="never" />
     <item
         android:id="@+id/action_logout"
         android:title="Logout"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
 </menu>

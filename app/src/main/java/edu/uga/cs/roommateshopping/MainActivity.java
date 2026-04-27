@@ -1,3 +1,7 @@
+/**
+ * The main activity of the RoommateShopping application.
+ * This activity sets up the navigation host and handling for the app's fragments.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.os.Bundle;
