@@ -1,3 +1,6 @@
+/**
+ * RecyclerView adapter for displaying registered roommates.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.view.LayoutInflater;

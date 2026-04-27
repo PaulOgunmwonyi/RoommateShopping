@@ -1,3 +1,7 @@
+/**
+ * Fragment responsible for user registration.
+ * Allows new users to create an account using Firebase Authentication.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.os.Bundle;

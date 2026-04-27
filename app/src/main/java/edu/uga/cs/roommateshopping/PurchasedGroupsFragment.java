@@ -1,3 +1,7 @@
+/**
+ * Fragment that displays history of purchased item groups.
+ * Provides functionality to settle costs among roommates and manage purchase history.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.os.Bundle;
@@ -23,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.firebase.auth.FirebaseAuth;
 import edu.uga.cs.roommateshopping.databinding.FragmentPurchasedGroupsBinding;
 import edu.uga.cs.roommateshopping.models.PurchaseGroup;
 import edu.uga.cs.roommateshopping.models.ShoppingItem;
@@ -88,29 +93,63 @@ public class PurchasedGroupsFragment extends Fragment implements PurchasedGroupA
     private void settleAccounts() {
         if (purchaseGroupList.isEmpty()) return;
 
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<String> allRoommates = new ArrayList<>();
+                for (DataSnapshot postSnapshot : snapshot.getChildren()) {
+                    String email = postSnapshot.child("email").getValue(String.class);
+                    if (email != null) {
+                        allRoommates.add(email);
+                    }
+                }
+
+                if (allRoommates.isEmpty()) {
+                    // Fallback if no users found in 'users' node
+                    settleWithCurrentPurchasers();
+                    return;
+                }
+
+                performSettlement(allRoommates);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                settleWithCurrentPurchasers();
+            }
+        });
+    }
+
+    private void settleWithCurrentPurchasers() {
+        List<String> roommates = new ArrayList<>();
+        for (PurchaseGroup group : purchaseGroupList) {
+            String email = group.getPurchasedBy();
+            if (!roommates.contains(email)) {
+                roommates.add(email);
+            }
+        }
+        performSettlement(roommates);
+    }
+
+    private void performSettlement(List<String> allRoommates) {
         Map<String, Double> expenses = new HashMap<>();
         double totalGlobal = 0;
-        List<String> roommates = new ArrayList<>();
 
         for (PurchaseGroup group : purchaseGroupList) {
             String email = group.getPurchasedBy();
             double price = group.getTotalPrice();
             totalGlobal += price;
-
             expenses.put(email, expenses.getOrDefault(email, 0.0) + price);
-            if (!roommates.contains(email)) {
-                roommates.add(email);
-            }
         }
 
-        if (roommates.isEmpty()) return;
-
-        double average = totalGlobal / roommates.size();
+        double average = totalGlobal / allRoommates.size();
         StringBuilder sb = new StringBuilder();
         sb.append("Total Expenses: $").append(String.format("%.2f", totalGlobal)).append("\n");
+        sb.append("Number of Roommates: ").append(allRoommates.size()).append("\n");
         sb.append("Average per roommate: $").append(String.format("%.2f", average)).append("\n\n");
 
-        for (String roommate : roommates) {
+        for (String roommate : allRoommates) {
             double spent = expenses.getOrDefault(roommate, 0.0);
             double balance = spent - average;
             sb.append(roommate).append(" spent $").append(String.format("%.2f", spent));
@@ -125,7 +164,6 @@ public class PurchasedGroupsFragment extends Fragment implements PurchasedGroupA
                 .setTitle("Settle Accounts")
                 .setMessage(sb.toString())
                 .setPositiveButton("Settle & Clear", (dialog, which) -> {
-                    // Remove all purchased groups from the database after settling
                     databaseReference.removeValue().addOnSuccessListener(aVoid -> {
                         Toast.makeText(getContext(), "Accounts settled and list cleared", Toast.LENGTH_SHORT).show();
                     });
@@ -134,33 +172,104 @@ public class PurchasedGroupsFragment extends Fragment implements PurchasedGroupA
                 .show();
     }
 
-    // If a group is clicked, give the option to undo the purchase and move items back to the list
+    // If a group is clicked, give options to update price, restore items, or remove specific item
     @Override
     public void onItemClick(PurchaseGroup group) {
+        String[] options = {"Update Total Price", "Remove Specific Item", "Remove Entire Group", "Cancel"};
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Purchase Group Actions")
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0: // Update Total Price
+                            showUpdatePriceDialog(group);
+                            break;
+                        case 1: // Remove Specific Item
+                            showRemoveItemDialog(group);
+                            break;
+                        case 2: // Remove Entire Group
+                            confirmRemoveGroup(group);
+                            break;
+                    }
+                })
+                .show();
+    }
+
+    private void showUpdatePriceDialog(PurchaseGroup group) {
+        final android.widget.EditText priceInput = new android.widget.EditText(requireContext());
+        priceInput.setHint("New Total Price");
+        priceInput.setText(String.valueOf(group.getTotalPrice()));
+        priceInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Update Price")
+                .setView(priceInput)
+                .setPositiveButton("Update", (dialog, which) -> {
+                    String priceStr = priceInput.getText().toString();
+                    if (!priceStr.isEmpty()) {
+                        try {
+                            double newPrice = Double.parseDouble(priceStr);
+                            group.setTotalPrice(newPrice);
+                            databaseReference.child(group.getKey()).setValue(group);
+                            Toast.makeText(getContext(), "Price updated", Toast.LENGTH_SHORT).show();
+                        } catch (NumberFormatException e) {
+                            Toast.makeText(getContext(), "Invalid price", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showRemoveItemDialog(PurchaseGroup group) {
+        List<ShoppingItem> items = group.getItems();
+        if (items == null || items.isEmpty()) return;
+
+        String[] itemNames = new String[items.size()];
+        for (int i = 0; i < items.size(); i++) {
+            itemNames[i] = items.get(i).getName();
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Select Item to Remove")
+                .setItems(itemNames, (dialog, which) -> {
+                    ShoppingItem itemToRemove = items.remove(which);
+                    
+                    // Move back to shopping list
+                    DatabaseReference shoppingListRef = FirebaseDatabase.getInstance().getReference("shopping_list");
+                    ShoppingItem restoredItem = new ShoppingItem(itemToRemove.getName(), itemToRemove.getQuantity());
+                    restoredItem.setImageUrl(itemToRemove.getImageUrl());
+                    shoppingListRef.push().setValue(restoredItem);
+
+                    // Update group in DB
+                    if (items.isEmpty()) {
+                        databaseReference.child(group.getKey()).removeValue();
+                    } else {
+                        databaseReference.child(group.getKey()).setValue(group);
+                    }
+                    Toast.makeText(getContext(), itemToRemove.getName() + " moved back to shopping list", Toast.LENGTH_SHORT).show();
+                })
+                .show();
+    }
+
+    private void confirmRemoveGroup(PurchaseGroup group) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Remove Purchased Group")
-                .setMessage("Do you want to remove this group and move all its items back to the shopping list?")
+                .setMessage("Do you want to move all its items back to the shopping list?")
                 .setPositiveButton("Yes", (dialog, which) -> {
-                    String groupKey = group.getKey();
-                    if (groupKey == null) return;
-
                     DatabaseReference shoppingListRef = FirebaseDatabase.getInstance().getReference("shopping_list");
-                    
                     List<ShoppingItem> items = group.getItems();
                     if (items != null) {
                         for (ShoppingItem item : items) {
-                            // Create clean items to move back
                             ShoppingItem restoredItem = new ShoppingItem(item.getName(), item.getQuantity());
                             restoredItem.setImageUrl(item.getImageUrl());
                             shoppingListRef.push().setValue(restoredItem);
                         }
                     }
-
-                    databaseReference.child(groupKey).removeValue().addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "Group removed and items restored to shopping list", Toast.LENGTH_SHORT).show();
-                    });
+                    databaseReference.child(group.getKey()).removeValue();
                 })
-                .setNegativeButton("No", null)
+                .setNegativeButton("No", (dialog, which) -> {
+                    databaseReference.child(group.getKey()).removeValue();
+                })
                 .show();
     }
 

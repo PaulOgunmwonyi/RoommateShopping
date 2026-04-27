@@ -1,3 +1,7 @@
+/**
+ * RecyclerView adapter for displaying shopping list items.
+ * Handles item selection, image loading with Glide, and click events.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.view.LayoutInflater;

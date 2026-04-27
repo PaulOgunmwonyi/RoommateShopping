@@ -1,3 +1,7 @@
+/**
+ * Fragment that displays the "Shopping Basket" or recently purchased items.
+ * Allows users to checkout items in the basket or move them back to the shopping list.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.os.Bundle;
@@ -20,6 +24,10 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.auth.FirebaseAuth;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import edu.uga.cs.roommateshopping.databinding.FragmentRecentlyPurchasedBinding;
 import edu.uga.cs.roommateshopping.models.PurchaseGroup;
@@ -130,6 +138,9 @@ public class RecentlyPurchasedFragment extends Fragment implements PurchasedItem
 
             String userEmail = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getEmail() : "Anonymous";
             PurchaseGroup group = new PurchaseGroup(userEmail, new ArrayList<>(purchasedItemList), total);
+            
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            group.setPurchaseDate(sdf.format(new Date()));
 
             DatabaseReference purchasedGroupsRef = FirebaseDatabase.getInstance().getReference("purchased_groups");
             purchasedGroupsRef.push().setValue(group).addOnSuccessListener(aVoid -> {

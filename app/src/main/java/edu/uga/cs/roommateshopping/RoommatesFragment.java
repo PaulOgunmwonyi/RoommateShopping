@@ -1,3 +1,7 @@
+/**
+ * Fragment that displays the list of registered roommates.
+ * Ensures the current user is registered in the database and provides a view of all users.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.os.Bundle;

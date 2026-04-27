@@ -1,3 +1,6 @@
+/**
+ * Model class representing a roommate/user in the application.
+ */
 package edu.uga.cs.roommateshopping.models;
 
 public class Roommate {

@@ -1,3 +1,7 @@
+/**
+ * Model class representing a group of items purchased together.
+ * Used for settlement calculations and purchase history.
+ */
 package edu.uga.cs.roommateshopping.models;
 
 import java.util.List;
@@ -8,6 +12,7 @@ public class PurchaseGroup {
     private List<ShoppingItem> items;
     private double totalPrice;
     private boolean settled;
+    private String purchaseDate;
 
     public PurchaseGroup() {
     }
@@ -17,6 +22,14 @@ public class PurchaseGroup {
         this.items = items;
         this.totalPrice = totalPrice;
         this.settled = false;
+    }
+
+    public String getPurchaseDate() {
+        return purchaseDate;
+    }
+
+    public void setPurchaseDate(String purchaseDate) {
+        this.purchaseDate = purchaseDate;
     }
 
     public String getKey() {

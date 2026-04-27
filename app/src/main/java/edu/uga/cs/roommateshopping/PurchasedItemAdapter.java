@@ -1,3 +1,7 @@
+/**
+ * RecyclerView adapter for displaying items in the shopping basket.
+ * Shows detailed item information including purchaser and date added.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.view.LayoutInflater;
@@ -40,8 +44,9 @@ public class PurchasedItemAdapter extends RecyclerView.Adapter<PurchasedItemAdap
         ShoppingItem item = purchasedItemList.get(position);
         holder.textViewName.setText(item.getName());
         holder.textViewQuantity.setText("Quantity: " + item.getQuantity());
-        holder.textViewPrice.setText("Price: $" + item.getPrice());
-        holder.textViewPurchasedBy.setText("Purchased by: " + item.getPurchasedBy());
+        // holder.textViewPrice.setText("Price: $" + item.getPrice()); // Price removed per request
+        holder.textViewPurchasedBy.setText("In basket: " + item.getPurchasedBy());
+        holder.textViewDate.setText("Added to basket: " + (item.getPurchaseDate() != null ? item.getPurchaseDate() : "N/A"));
 
         if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
             holder.imageViewItem.setVisibility(View.VISIBLE);
@@ -70,6 +75,7 @@ public class PurchasedItemAdapter extends RecyclerView.Adapter<PurchasedItemAdap
         TextView textViewQuantity;
         TextView textViewPrice;
         TextView textViewPurchasedBy;
+        TextView textViewDate;
         ImageView imageViewItem;
 
         public PurchasedItemHolder(@NonNull View itemView) {
@@ -78,6 +84,7 @@ public class PurchasedItemAdapter extends RecyclerView.Adapter<PurchasedItemAdap
             textViewQuantity = itemView.findViewById(R.id.textViewQuantity);
             textViewPrice = itemView.findViewById(R.id.textViewPrice);
             textViewPurchasedBy = itemView.findViewById(R.id.textViewPurchasedBy);
+            textViewDate = itemView.findViewById(R.id.textViewDate);
             imageViewItem = itemView.findViewById(R.id.imageViewItem);
         }
     }

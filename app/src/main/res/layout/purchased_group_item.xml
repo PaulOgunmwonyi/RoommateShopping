@@ -48,5 +48,13 @@
             android:layout_marginTop="4dp"
             android:textStyle="italic"/>
 
+        <TextView
+            android:id="@+id/textViewPurchaseDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Date: 2023-10-27"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"/>
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>

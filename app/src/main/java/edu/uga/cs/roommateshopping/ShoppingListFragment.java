@@ -1,3 +1,7 @@
+/**
+ * Fragment that displays the current shopping list.
+ * Users can add, update, delete, and select items for purchase.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.os.Bundle;
@@ -32,6 +36,10 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import edu.uga.cs.roommateshopping.databinding.FragmentShoppingListBinding;
 import edu.uga.cs.roommateshopping.models.PurchaseGroup;
@@ -180,6 +188,9 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
                         String oldKey = item.getKey();
                         item.setPurchasedBy(userEmail);
                         item.setPrice("0"); // Default price in basket, can be updated later or at checkout
+                        
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                        item.setPurchaseDate(sdf.format(new Date()));
 
                         recentlyPurchasedRef.push().setValue(item).addOnSuccessListener(aVoid -> {
                             databaseReference.child(oldKey).removeValue();
@@ -258,6 +269,9 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
                         item.setPurchasedBy(mAuth.getCurrentUser().getEmail());
                     }
                     item.setPrice("0"); // Default price, can be set in basket
+                    
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                    item.setPurchaseDate(sdf.format(new Date()));
 
                     DatabaseReference recentlyPurchasedRef = FirebaseDatabase.getInstance().getReference("recently_purchased");
                     recentlyPurchasedRef.push().setValue(item).addOnSuccessListener(aVoid -> {

@@ -1,3 +1,7 @@
+/**
+ * Fragment responsible for user login.
+ * Handles user authentication with Firebase and navigation to the shopping list or registration fragment.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.os.Bundle;

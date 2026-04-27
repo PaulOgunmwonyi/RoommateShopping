@@ -1,3 +1,7 @@
+/**
+ * RecyclerView adapter for displaying groups of purchased items.
+ * Shows group totals, dates, and summarizes the items included in the purchase.
+ */
 package edu.uga.cs.roommateshopping;
 
 import android.view.LayoutInflater;
@@ -50,6 +54,7 @@ public class PurchasedGroupAdapter extends RecyclerView.Adapter<PurchasedGroupAd
         }
         holder.textViewItems.setText(itemsText.toString());
         holder.textViewSettled.setText("Status: " + (group.isSettled() ? "Settled" : "Not Settled"));
+        holder.textViewPurchaseDate.setText("Date: " + (group.getPurchaseDate() != null ? group.getPurchaseDate() : "N/A"));
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -68,6 +73,7 @@ public class PurchasedGroupAdapter extends RecyclerView.Adapter<PurchasedGroupAd
         TextView textViewTotalPrice;
         TextView textViewItems;
         TextView textViewSettled;
+        TextView textViewPurchaseDate;
 
         public PurchasedGroupHolder(@NonNull View itemView) {
             super(itemView);
@@ -75,6 +81,7 @@ public class PurchasedGroupAdapter extends RecyclerView.Adapter<PurchasedGroupAd
             textViewTotalPrice = itemView.findViewById(R.id.textViewTotalPrice);
             textViewItems = itemView.findViewById(R.id.textViewItems);
             textViewSettled = itemView.findViewById(R.id.textViewSettled);
+            textViewPurchaseDate = itemView.findViewById(R.id.textViewPurchaseDate);
         }
     }
 }
