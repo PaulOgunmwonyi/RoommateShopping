@@ -13,6 +13,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
 import edu.uga.cs.roommateshopping.databinding.FragmentLoginBinding;
 
@@ -46,6 +47,16 @@ public class LoginFragment extends Fragment {
                     .addOnCompleteListener(requireActivity(), task -> {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "signInWithEmail:success");
+                            
+                            // Ensure the user is in the database for the roommates list
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            if (user != null) {
+                                FirebaseDatabase.getInstance().getReference("users")
+                                        .child(user.getUid())
+                                        .child("email")
+                                        .setValue(user.getEmail());
+                            }
+
                             NavHostFragment.findNavController(LoginFragment.this)
                                     .navigate(R.id.action_LoginFragment_to_ShoppingListFragment);
                         } else {

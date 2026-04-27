@@ -43,6 +43,9 @@
         <action
             android:id="@+id/action_ShoppingListFragment_to_PurchasedGroupsFragment"
             app:destination="@id/PurchasedGroupsFragment" />
+        <action
+            android:id="@+id/action_ShoppingListFragment_to_RoommatesFragment"
+            app:destination="@id/RoommatesFragment" />
     </fragment>
 
     <fragment
@@ -56,6 +59,12 @@
         android:name="edu.uga.cs.roommateshopping.PurchasedGroupsFragment"
         android:label="Purchased Groups"
         tools:layout="@layout/fragment_purchased_groups" />
+
+    <fragment
+        android:id="@+id/RoommatesFragment"
+        android:name="edu.uga.cs.roommateshopping.RoommatesFragment"
+        android:label="Roommates"
+        tools:layout="@layout/fragment_roommates" />
 
     <fragment
         android:id="@+id/FirstFragment"

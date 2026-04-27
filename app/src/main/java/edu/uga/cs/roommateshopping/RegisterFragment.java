@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.FirebaseDatabase;
 
 import edu.uga.cs.roommateshopping.databinding.FragmentRegisterBinding;
 
@@ -45,6 +46,16 @@ public class RegisterFragment extends Fragment {
                     .addOnCompleteListener(requireActivity(), task -> {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "createUserWithEmail:success");
+
+                            // Save user to database so we can list roommates
+                            if (mAuth.getCurrentUser() != null) {
+                                String userId = mAuth.getCurrentUser().getUid();
+                                FirebaseDatabase.getInstance().getReference("users")
+                                        .child(userId)
+                                        .child("email")
+                                        .setValue(email);
+                            }
+
                             NavHostFragment.findNavController(RegisterFragment.this)
                                     .navigate(R.id.action_RegisterFragment_to_ShoppingListFragment);
                         } else {

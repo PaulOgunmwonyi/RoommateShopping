@@ -96,7 +96,7 @@ public class PurchasedGroupsFragment extends Fragment implements PurchasedGroupA
             String email = group.getPurchasedBy();
             double price = group.getTotalPrice();
             totalGlobal += price;
-            
+
             expenses.put(email, expenses.getOrDefault(email, 0.0) + price);
             if (!roommates.contains(email)) {
                 roommates.add(email);
@@ -124,11 +124,11 @@ public class PurchasedGroupsFragment extends Fragment implements PurchasedGroupA
         new AlertDialog.Builder(requireContext())
                 .setTitle("Settle Accounts")
                 .setMessage(sb.toString())
-                .setPositiveButton("Mark All Settled", (dialog, which) -> {
-                    for (PurchaseGroup group : purchaseGroupList) {
-                        databaseReference.child(group.getKey()).child("settled").setValue(true);
-                    }
-                    Toast.makeText(getContext(), "All groups marked as settled", Toast.LENGTH_SHORT).show();
+                .setPositiveButton("Settle & Clear", (dialog, which) -> {
+                    // Remove all purchased groups from the database after settling
+                    databaseReference.removeValue().addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "Accounts settled and list cleared", Toast.LENGTH_SHORT).show();
+                    });
                 })
                 .setNegativeButton("Close", null)
                 .show();

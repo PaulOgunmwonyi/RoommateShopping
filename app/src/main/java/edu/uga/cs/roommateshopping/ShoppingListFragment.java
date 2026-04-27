@@ -123,9 +123,13 @@ public class ShoppingListFragment extends Fragment implements ShoppingItemAdapte
                     NavHostFragment.findNavController(ShoppingListFragment.this)
                             .navigate(R.id.action_ShoppingListFragment_to_RecentlyPurchasedFragment);
                     return true;
-                } else if (menuItem.getItemId() == R.id.action_purchased || menuItem.getItemId() == R.id.action_roommates) {
+                } else if (menuItem.getItemId() == R.id.action_purchased) {
                     NavHostFragment.findNavController(ShoppingListFragment.this)
                             .navigate(R.id.action_ShoppingListFragment_to_PurchasedGroupsFragment);
+                    return true;
+                } else if (menuItem.getItemId() == R.id.action_roommates) {
+                    NavHostFragment.findNavController(ShoppingListFragment.this)
+                            .navigate(R.id.action_ShoppingListFragment_to_RoommatesFragment);
                     return true;
                 } else if (menuItem.getItemId() == R.id.action_select_mode) {
                     toggleSelectionMode(menuItem);
